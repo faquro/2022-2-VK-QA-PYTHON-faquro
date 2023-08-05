@@ -2,8 +2,6 @@
 
 ---
 
-Это моя копия репозитория с выполненными домашними заданиями.
-
 ### Homework 1 - testing web UI with selenium
 
 ### Homework 2 - testing web UI with selenium and PageObject pattern

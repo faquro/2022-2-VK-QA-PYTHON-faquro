@@ -1,0 +1,6 @@
+APP_HOST = 0.0.0.0
+APP_PORT = 8082
+MYSQL_HOST = db_final_project
+MYSQL_PORT = 3306
+MYSQL_DB = MYSQL_DB
+VK_URL = vk_api_final_project:5000

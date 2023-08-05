@@ -1,0 +1,84 @@
+version: "3.5"
+
+networks:
+    final-project-network:
+        external:
+            name: final-project-network            
+
+services:
+    db:
+        image: percona:latest
+        container_name: db_final_project
+        restart: always
+        ports:
+            - "3306:3306"
+        ulimits:
+            nproc: 65535
+            nofile:
+              soft: 26677
+              hard: 46677
+        volumes:
+            - /home/faquro/PycharmProjects/2022-2-VK-QA-PYTHON-faquro/FINAL_PROJECT/config_dir/init.sql:/docker-entrypoint-initdb.d/init.sql
+        environment:
+            MYSQL_ROOT_USER: root
+            MYSQL_ROOT_PASSWORD: pass
+        healthcheck:
+            test: [ "CMD", "mysqladmin", "-uroot", "-ppass", "ping", "-h", "127.0.0.1" ]
+            timeout: 30s
+            retries: 10
+        networks:
+            - final-project-network
+
+    mock:
+        image: mock_vk_api:latest
+        container_name: vk_api_final_project
+        
+        ports:
+            - "5000:5000"
+        networks:
+            - final-project-network
+
+    app:
+        image: myapp
+        container_name: myapp_final_project
+        ports:
+            - "8082:8082"
+        depends_on:
+            db:
+                condition: service_healthy
+        volumes:
+            - /home/faquro/PycharmProjects/2022-2-VK-QA-PYTHON-faquro/FINAL_PROJECT/config_dir:/config_dir
+        entrypoint: "/app/myapp --config=/config_dir/config"
+        links:
+            - db
+            - mock
+        restart: always
+        networks:
+            - final-project-network
+    
+    selenoid:
+        image: aerokube/selenoid:latest
+        container_name: selenoid_final_project
+        volumes:
+             - "/home/faquro/PycharmProjects/2022-2-VK-QA-PYTHON-faquro/FINAL_PROJECT/config_dir:/etc/selenoid"
+             - "/var/run/docker.sock:/var/run/docker.sock"
+             - "/home/faquro/vid:/opt/selenoid/video"
+        environment:
+             - "OVERRIDE_VIDEO_OUTPUT_DIR=/home/faquro/vid"
+        command: ["-conf", "/etc/selenoid/browsers.json", "-video-output-dir", "/opt/selenoid/video", "-container-network", "final-project-network"]
+
+        ports:
+             - "4444:4444"
+        networks:
+            - final-project-network
+    
+    selenoid-ui:
+       image: aerokube/selenoid-ui
+       container_name: selenoid-ui
+       links:
+            - selenoid
+       ports:
+           - "8080:8080"
+       command: ["--selenoid-uri", "http://selenoid:4444"]
+       networks:
+            - final-project-network
